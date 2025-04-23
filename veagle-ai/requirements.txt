@@ -1,0 +1,14 @@
+# Core Python packages (no need to install separately, part of standard library)
+# os, uuid, json, datetime, collections, threading, pathlib
+
+# External packages
+opencv-python
+numpy
+scipy
+tqdm
+python-dotenv
+ultralytics
+inference
+supervision
+flask
+pymongo

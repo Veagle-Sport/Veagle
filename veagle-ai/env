@@ -1,0 +1,14 @@
+# ======== MATCH_ANALYSIS LOCAL VARIABLES ===========
+ROBOFLOW_API_KEY="eWjFFGFLFYBFYirmaUoz"
+PLAYER_DETECTION_MODEL_ID="football-players-detection-3zvbc/11"
+FIELD_DETECTION_MODEL_ID="football-field-detection-f07vi/14"
+
+# ======== API LOCAL VARIABLES ===========
+# MongoDB
+MONGODB_URI=mongodb+srv://insharo:Nx4XfD7pJWEY5QBu@cluster0.tdyv5wj.mongodb.net/veagle
+MONGO_DB_NAME=veagle
+
+# Flask
+FLASK_HOST=0.0.0.0
+FLASK_PORT=5000
+FLASK_DEBUG=True
