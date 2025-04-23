@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>SSE Match Viewer</title>
+</head>
+<body>
+  <h1>⚽ Live Match Updates</h1>
+
+  <div id="output">Waiting for updates...</div>
+
+  <form id="uploadForm">
+    <input type="file" id="fileInput">
+    <button type="submit">Upload</button>
+  </form>
+
+  <script>
+    let body = new FormData();
+
+    document.getElementById('uploadForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const fileInput = document.getElementById('fileInput');
+      if (fileInput.files.length > 0) {
+        body = new FormData();
+        body.append('originalVideo', fileInput.files[0]);
+        fetch(`http://localhost:8000/matchs`, {
+        method: 'POST',
+        body: body
+      })
+       } else {
+        console.log('No file selected');
+      }
+    });
+
+   
+  </script>
+</body>
+</html>
