@@ -13,7 +13,7 @@ Veagle is a tech company providing smart recording cameras for sports facilities
 - **Calculate player activity:** 
 
 ## Datasets
-Add all files (file.pt) in /data
+
 | Use Case                        | Dataset                                                                                                                                                                 |
 |:--------------------------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | Veagle player detection         | [![Download Dataset](https://universe.roboflow.com/veagle/veagle/model/17)](https://universe.roboflow.com/veagle/veagle/model/17) |
