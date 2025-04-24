@@ -19,10 +19,9 @@ from pathlib import Path
 env_path = Path(__file__).resolve().parents[1] / '.env'
 load_dotenv(dotenv_path=env_path)
 
-ROBOFLOW_API_KEY = os.environ["ROBOFLOW_API_KEY"]  # Raises KeyError if missing
-
-PLAYER_DETECTION_MODEL_ID = os.getenv("PLAYER_DETECTION_MODEL_ID")
-FIELD_DETECTION_MODEL_ID = os.getenv("FIELD_DETECTION_MODEL_ID")
+ROBOFLOW_API_KEY="eWjFFGFLFYBFYirmaUoz"
+PLAYER_DETECTION_MODEL_ID="veagle/17"
+FIELD_DETECTION_MODEL_ID="football-field-detection-f07vi/14"
 
 
 FIELD_DETECTION_MODEL = get_model(
@@ -538,13 +537,45 @@ def analyze_video(video_path):
     """Main function to analyze video and return statistics in API-compatible format"""
     print(f"Analyzing video: {video_path}")
     
-    # Process the video
-    player_data, ball_data, field_keypoints_data = process_video(
-        video_path, PLAYER_DETECTION_MODEL, FIELD_DETECTION_MODEL)
+    try:
+        # Process the video
+        player_data, ball_data, field_keypoints_data = process_video(
+            video_path, PLAYER_DETECTION_MODEL, FIELD_DETECTION_MODEL)
+    except Exception as e:
+        print(f"Error processing video: {str(e)}")
+        return {
+            "originalVideo": video_path,
+            "analyzedVideo": "",
+            "playersImage": "",
+            "passes": 0,
+            "shotsOnGoal": 0,
+            "corners": 0,
+            "saves": 0,
+            "goals": 0,
+            "fouls": 0,
+            "cleanSheets": True,
+            "playersStats": []
+        }
     
-    # Calculate statistics
-    video_info = sv.VideoInfo.from_video_path(video_path)
-    player_stats = calculate_player_stats(player_data, ball_data, field_keypoints_data, video_info.fps)
+    try:
+        # Calculate statistics
+        video_info = sv.VideoInfo.from_video_path(video_path)
+        player_stats = calculate_player_stats(player_data, ball_data, field_keypoints_data, video_info.fps)
+    except Exception as e:
+        print(f"Error calculating statistics: {str(e)}")
+        return {
+            "originalVideo": video_path,
+            "analyzedVideo": "",
+            "playersImage": "",
+            "passes": 0,
+            "shotsOnGoal": 0,
+            "corners": 0,
+            "saves": 0,
+            "goals": 0,
+            "fouls": 0,
+            "cleanSheets": True,
+            "playersStats": []
+        }
     
     # Convert to API-compatible format
     total_passes = 0
@@ -556,39 +587,53 @@ def analyze_video(video_path):
     players_stats = []
     
     for player_id, stats in player_stats.items():
-        # Skip goalkeepers that aren't ID 1 or 2
-        if stats['is_goalkeeper'] and player_id not in [1, 2]:
-            continue
+        try:
+            # Skip goalkeepers that aren't ID 1 or 2
+            if stats.get('is_goalkeeper', False) and player_id not in [1, 2]:
+                continue
+                
+            # Update aggregated stats
+            total_passes += int(stats.get('total_passes', 0))
+            total_shots_on_goal += int(stats.get('shots_on_target', 0))
+            total_goals += int(stats.get('goals_scored', 0))
             
-        # Update aggregated stats
-        total_passes += int(stats['total_passes'])
-        total_shots_on_goal += int(stats['shots_on_target'])
-        total_goals += int(stats['goals_scored'])
-        
-        if stats['is_goalkeeper']:
-            total_saves += int(stats['shots_on_target'] - stats['goals_conceded'])
-        
-        # Create player stats record
-        player_record = {
-            "playerId": f"{'GK' if stats['is_goalkeeper'] else 'P'}-{player_id}",
-            "playerType": "goalKeeper" if stats['is_goalkeeper'] else "player",
-            "stats": {
-                "passes": int(stats['total_passes']),
-                "speed": f"{int(round(stats['max_speed_kmh']))} km/h",
-                "shotsOnGoal": int(stats['shots_on_target'])
+            if stats.get('is_goalkeeper', False):
+                total_saves += int(stats.get('shots_on_target', 0) - stats.get('goals_conceded', 0))
+            
+            # Create player stats record
+            player_record = {
+                "AIModelId": str(player_id),
+                "playerId": "",
+                "playerType": "goalKeeper" if stats.get('is_goalkeeper', False) else "Outfielder",
+                "stats": {
+                    "passes": int(stats.get('total_passes', 0)),
+                    "speed": f"{int(round(stats.get('max_speed_kmh', 0)))}km",
+                }
             }
-        }
-        
-        # Add goalkeeper-specific stats
-        if stats['is_goalkeeper']:
-            player_record["stats"].update({
-                "saves": int(stats['shots_on_target'] - stats['goals_conceded']),
-                "cleanSheets": stats['clean_sheet']
-            })
-            # Remove shotsOnGoal for goalkeepers as per example
-            player_record["stats"].pop("shotsOnGoal")
-        
-        players_stats.append(player_record)
+            
+            # Add goalkeeper-specific stats
+            if stats.get('is_goalkeeper', False):
+                try:
+                    player_record["stats"].update({
+                        "saves": int(stats.get('shots_on_target', 0) - stats.get('goals_conceded', 0)),
+                        "cleanSheets": stats.get('clean_sheet', True)
+                    })
+                except Exception as e:
+                    print(f"Error adding goalkeeper stats for player {player_id}: {str(e)}")
+            else:
+                try:
+                    player_record["stats"].update({
+                        "shotsOnGoal": int(stats.get('shots_on_target', 0)),
+                        "corners": 0
+                    })
+                except Exception as e:
+                    print(f"Error adding outfielder stats for player {player_id}: {str(e)}")
+            
+            players_stats.append(player_record)
+            
+        except Exception as e:
+            print(f"Error processing player {player_id}: {str(e)}")
+            continue
     
     # Set cleanSheets to False if any goals were scored
     if total_goals > 0:
@@ -597,10 +642,14 @@ def analyze_video(video_path):
     # Create the output data structure
     analysis_results = {
         "originalVideo": video_path,
-        "total_passes": total_passes,
-        "total_shotsOnGoal": total_shots_on_goal,
-        "total_saves": total_saves,
-        "total_goals": total_goals,
+        "analyzedVideo": "",
+        "playersImage": "",
+        "passes": total_passes,
+        "shotsOnGoal": total_shots_on_goal,
+        "corners": 0,
+        "saves": total_saves,
+        "goals": total_goals,
+        "fouls": 0,
         "cleanSheets": clean_sheets,
         "playersStats": players_stats
     }
@@ -610,7 +659,8 @@ def analyze_video(video_path):
 
 
 
-
+"""
+without api if local machine : 
 def main():
     import argparse
     import json
@@ -656,3 +706,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+"""
