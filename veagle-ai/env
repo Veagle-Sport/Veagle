@@ -1,6 +1,6 @@
 # ======== MATCH_ANALYSIS LOCAL VARIABLES ===========
 ROBOFLOW_API_KEY="eWjFFGFLFYBFYirmaUoz"
-PLAYER_DETECTION_MODEL_ID="football-players-detection-3zvbc/11"
+PLAYER_DETECTION_MODEL_ID="veagle/17"
 FIELD_DETECTION_MODEL_ID="football-field-detection-f07vi/14"
 
 # ======== API LOCAL VARIABLES ===========
